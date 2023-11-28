@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% set title="Stan magazynu" %}
+{% set active_page="store" %}
+
+{% block content %}
+
+    <p class="fs-3">Stan konta: {{ amount_in_account }}</p>
+
+    <p class="d-flex justify-content-center fs-3 fw-bold mb-1">Stan magazynu</p>
+    <div class="w-100">
+        <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th scope="col">Lp.</th>
+                <th scope="col">Nazwa produktu</th>
+                <th scope="col">Cena</th>
+                <th scope="col">Ilość</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for name in warehouse %}
+                <tr>
+                    <th scope="row">{{ loop.index }}</th>
+                    <td>{{ name.capitalize() }}</td>
+                    <td>{{ warehouse[name]['price'] }}</td>
+                    <td>{{ warehouse[name]['amount'] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% set title="Accountant" %}
+{% set active_page="index" %}
+
+{% block content %}
+
+    <p class="fs-3">Stan konta: {{ amount_in_account }}</p>
+
+    <form class="w-25" action="{{ url_for('index') }}" method="POST">
+        <div class="mb-3">
+            <label class="form-label fs-4">Zmień saldo:</label>
+            <input type="number" class="form-control" name="difference_in_account">
+            <div class="form-text">Podaj kwotę do dodania lub odjęcia z konta.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Wyślij</button>
+    </form>
+
+    <br>
+    <br>
+
+    <form class="w-25" action="{{ url_for('index') }}" method="POST">
+        <p class="fs-4 mb-2">Dokonaj zakupu:</p>
+        <div class="mb-3">
+            <label class="form-label">Nazwa produktu:</label>
+            <input type="text" class="form-control" name="product_to_buy_name">
+            <div class="form-text">Wprowadź nazwę zakupionego produktu.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Cena jednostkowa:</label>
+            <input type="number" class="form-control" name="product_to_buy_price">
+            <div class="form-text">Wprowadź cenę zakupionego produktu.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Ilość:</label>
+            <input type="number" class="form-control" name="product_to_buy_amount">
+            <div class="form-text">Wprowadź ilość zakupionych produktów.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Wyślij</button>
+    </form>
+
+    <br>
+    <br>
+
+    <form class="w-25" action="{{ url_for('index') }}" method="POST">
+        <p class="fs-4 mb-2">Dokonaj sprzedaży:</p>
+        <div class="mb-3">
+            <label class="form-label">Nazwa produktu:</label>
+            <input type="text" class="form-control" name="product_to_sell_name">
+            <div class="form-text">Wprowadź nazwę sprzedanego produktu.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Cena jednostkowa:</label>
+            <input type="number" class="form-control" name="product_to_sell_price">
+            <div class="form-text">Wprowadź cenę sprzedanego produktu.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Ilość:</label>
+            <input type="number" class="form-control" name="product_to_sell_amount">
+            <div class="form-text">Wprowadź ilość sprzedanych produktów.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Wyślij</button>
+    </form>
+
+{% endblock %}

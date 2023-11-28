@@ -1,0 +1,79 @@
+Obecne zadanie
+*** ORM i program accountant ***
+Do poprzedniego zadania (webowe zarządzanie firmą) dodaj obsługę bazy danych. Dane, które uprzednio znajdowały się w
+plikach, teraz mają się znaleźć w bazie danych. Dołącz do repozytorium własne migracje (nie dołączaj pliku bazy danych).
+
+Należy zwrócić uwagę na integralność bazy danych (zapisanie danych do bazy powinno następować jednocześnie dla
+wszystkich elementów jednej akcji, żeby tabele z historią i innymi danymi były ze sobą zgodne).
+
+Dodatkowo można zaimplementować skrypt sprawdzający, czy w bazie danych nie wystąpił błąd i dane dalej się zgadzają.
+
+
+
+Zadanie z lekcji 3 aplikacja webowa
+*** Projekty strony głównej i podstron dla systemu accountant ***
+
+Zadanie polega na zaprojektowaniu strony głównej dla aplikacji do zarządzania magazynem i księgowością oraz podstrony
+"Historia".
+
+1.Strona główna powinna zawierać następujące elementy:
+Wyświetlanie aktualnego stanu magazynowego i aktualnego salda.
+Trzy formularze:
+a. Formularz do zakupu: z polami: nazwa produktu, cena jednostkowa, liczba sztuk.
+b. Formularz do sprzedaży: z polami: nazwa produktu, cena jednostkowa, liczba sztuk.
+c. Formularz zmiany salda: z polami: komentarz, wartość (tylko liczbowa).
+
+2.Podstrona "Historia"
+Podstrona powinna być dostępna pod adresem "/historia/" i "/historia/<line_from>/<line_to>/"
+Jeśli nie podano parametrów, powinna wyświetlać całą historię.
+Jeśli podano parametry, powinna wyświetlać dane z danego zakresu.
+
+3.CSS
+Zapewnij przyjazny dla użytkownika interfejs, stosując style CSS.
+
+
+
+Zadanie z lekcji 9
+*** Prosty system księgowy/magazyn z tekstową bazą danych ***
+
+Na podstawie zadania z lekcji 5 (operacje na koncie, sprzedaż/zakup itp.) należy zaimplementować poniższą część:
+
+Saldo konta oraz magazyn mają zostać zapisane do pliku tekstowego, a przy kolejnym uruchomieniu programu ma zostać
+odczytany. Zapisać należy również historię operacji (przegląd), która powinna być rozszerzana przy każdym kolejnym
+uruchomieniu programu.
+
+
+
+Zadanie z lekcji 5
+*** Prosty system księgowy/magazyn ***
+
+Napisz program, który będzie rejestrował operacje na koncie firmy i stan magazynu.
+
+Program po uruchomieniu wyświetla informację o dostępnych komendach:
+
+saldo
+sprzedaż
+zakup
+konto
+lista
+magazyn
+przegląd
+koniec
+
+Po wprowadzeniu odpowiedniej komendy, aplikacja zachowuje się w unikalny sposób dla każdej z nich:
+
+saldo - Program pobiera kwotę do dodania lub odjęcia z konta.
+sprzedaż - Program pobiera nazwę produktu, cenę oraz liczbę sztuk. Produkt musi znajdować się w magazynie. Obliczenia respektuje względem konta i magazynu (np. produkt "rower" o cenie 100 i jednej sztuce spowoduje odjęcie z magazynu produktu "rower" oraz dodanie do konta kwoty 100).
+zakup - Program pobiera nazwę produktu, cenę oraz liczbę sztuk. Produkt zostaje dodany do magazynu, jeśli go nie było. Obliczenia są wykonane odwrotnie do komendy "sprzedaz". Saldo konta po zakończeniu operacji „zakup” nie może być ujemne.
+konto - Program wyświetla stan konta.
+lista - Program wyświetla całkowity stan magazynu wraz z cenami produktów i ich ilością.
+magazyn - Program wyświetla stan magazynu dla konkretnego produktu. Należy podać jego nazwę.
+przegląd - Program pobiera dwie zmienne „od” i „do”, na ich podstawie wyświetla wszystkie wprowadzone akcje zapisane pod indeksami od „od” do „do”. Jeżeli użytkownik podał pustą wartość „od” lub „do”, program powinien wypisać przegląd od początku lub/i do końca. Jeżeli użytkownik podał zmienne spoza zakresu, program powinien o tym poinformować i wyświetlić liczbę zapisanych komend (żeby pozwolić użytkownikowi wybrać odpowiedni zakres).
+koniec - Aplikacja kończy działanie.
+
+Dodatkowe wymagania:
+
+Aplikacja od uruchomienia działa tak długo, aż podamy komendę "koniec".
+Komendy saldo, sprzedaż i zakup są zapamiętywane przez program, aby móc użyć komendy "przeglad".
+Po wykonaniu dowolnej komendy (np. "saldo") aplikacja ponownie wyświetla informację o dostępnych komendach, a także prosi o wprowadzenie jednej z nich.
+Zadbaj o błędy, które mogą się pojawić w trakcie wykonywania operacji (np. przy komendzie "zakup" jeśli dla produktu podamy ujemną kwotę, aplikacja powinna wyświetlić informację o niemożności wykonania operacji i jej nie wykonać). Zadbaj też o prawidłowe typy danych.
