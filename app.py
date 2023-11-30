@@ -1,10 +1,44 @@
 from flask import Flask, render_template, request, flash
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from json import dumps, loads
 from json.decoder import JSONDecodeError
+from sqlalchemy import Text
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "Tajny klucz"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+
+db = SQLAlchemy(app)
+
+
+class Account(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Integer)
+
+
+class Warehouse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name_of_product = db.Column(db.String(150))
+    price_of_product = db.Column(db.Integer)
+    amount_of_product = db.Column(db.Integer)
+
+
+class History(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name_of_operation = db.Column(db.String(150))
+    description_of_operation = db.Column(Text)
+    date_of_operation = db.Column(db.DateTime)
+
+    def __init__(self, list_of_description):
+        self.description_of_operation = dumps(list_of_description)
+
+    def give_description_of_operation(self):
+        return loads(self.description_of_operation)
+
+
+with app.app_context():
+    db.create_all()
 
 
 def give_operation_date():
@@ -13,14 +47,11 @@ def give_operation_date():
 
 
 def read_amount_in_account():
-    try:
-        with open("data_amount_in_account.txt") as file_stream:
-            amount_txt_data = file_stream.readline()
-
-            if amount_txt_data:
-                return amount_txt_data
-    except FileNotFoundError:
-        print("Nie pobrano danych z pliku.")
+    account = Account.query.first()
+    if account:
+        return account.amount
+    else:
+        return 0
 
 
 def read_warehouse():
@@ -56,8 +87,12 @@ def read_operation_history():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Odczytanie danych z plików
-    amount_in_account = int(read_amount_in_account())
+    # Odczytanie stanu konta z bazy danych
+    amount_in_account = read_amount_in_account()
+
+    # Odczytanie historii operacji z bazy danych
+    pass
+
     warehouse = read_warehouse()
     operation_history = read_operation_history()
 
@@ -80,6 +115,16 @@ def index():
 
         # Dodanie komunikatu - Saldo
         flash("Zmieniono stan konta!")
+
+        # Zapis stanu konta do bazy danych
+        account = Account.query.first()
+        if account:
+            account.amount = amount_in_account
+            db.session.commit()
+        else:
+            new_account = Account(amount=0)
+            db.session.add(new_account)
+            db.session.commit()
 
     # Zakup produktu
     # Pobranie danych wejściowych
@@ -166,9 +211,9 @@ def index():
         # Dodanie komunikatu - Sprzedaż
         flash("Dokonano wpisu sprzedaży!")
 
-    # Zapisanie danych do plików
-    with open("data_amount_in_account.txt", "w") as file_stream:
-        file_stream.write(str(amount_in_account))
+    # # Zapisanie danych do plików
+    # with open("data_amount_in_account.txt", "w") as file_stream:
+    #     file_stream.write(str(amount_in_account))
 
     with open("warehouse.json", "w") as file_stream:
         file_stream.write(dumps(warehouse))
