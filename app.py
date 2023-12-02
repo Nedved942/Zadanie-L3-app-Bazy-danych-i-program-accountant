@@ -55,6 +55,16 @@ def read_amount_in_account():
         return 0
 
 
+def save_amount_in_account(amount_in_account):
+    account = Account.query.first()
+    if account:
+        account.amount = amount_in_account
+        db.session.commit()
+    else:
+        new_account = Account(amount=0)
+        db.session.add(new_account)
+
+
 def read_warehouse():
     try:
         with open("warehouse.json") as file_stream:
@@ -91,12 +101,6 @@ def index():
     # Odczytanie stanu konta z bazy danych
     amount_in_account = read_amount_in_account()
 
-    # Odczytanie historii operacji z bazy danych
-    pass
-
-    warehouse = read_warehouse()
-    operation_history = read_operation_history()
-
     # Zmiana salda
     # Pobranie danych wejściowych
     difference_in_account = request.form.get("difference_in_account")
@@ -104,15 +108,6 @@ def index():
     if difference_in_account:
         difference_in_account = int(difference_in_account)
         amount_in_account += difference_in_account
-
-        # Zapis stanu konta do bazy danych
-        account = Account.query.first()
-        if account:
-            account.amount = amount_in_account
-            db.session.commit()
-        else:
-            new_account = Account(amount=0)
-            db.session.add(new_account)
 
         # Aktualizacja historii operacji - Dodanie operacji do tabeli bazy danych
         name_of_operation = "Saldo"
@@ -184,55 +179,56 @@ def index():
     if product_to_sell_name and product_to_sell_price and product_to_sell_amount:
         product_to_sell_price = int(product_to_sell_price)
         product_to_sell_amount = int(product_to_sell_amount)
-        if product_to_sell_name not in warehouse:
+
+        # Sprawdzenie czy produkt znajduje się w magazynie
+        product_from_warehouse = Warehouse.query.filter(Warehouse.name_of_product == product_to_sell_name).first()
+        if not product_from_warehouse:
             flash("Podanego produktu nie ma w spisie magazynowym!")
             return render_template("index.html", amount_in_account=amount_in_account)
-        if product_to_sell_amount >= warehouse[product_to_sell_name]["amount"]:
-            flash("Sprzedano całą ilość danego produktu.")
+        if product_from_warehouse:
+            if product_to_sell_amount >= product_from_warehouse.amount_of_product:
+                flash("Sprzedano całą ilość danego produktu.")
 
         # Odjęcie z magazynu sprzedawanej ilości towaru
-        warehouse[product_to_sell_name]["amount"] = \
-            warehouse[product_to_sell_name]["amount"] - product_to_sell_amount
+        product_from_warehouse.amount_of_product -= product_to_sell_amount
 
         # Sprawdzenie czy jest wystarczająca ilość towaru w magazynie
-        if warehouse[product_to_sell_name]["amount"] < 0:
-            product_to_sell_amount = product_to_sell_amount + warehouse[product_to_sell_name]["amount"]
+        if product_from_warehouse.amount_of_product < 0:
+            product_to_sell_amount += product_from_warehouse.amount_of_product
             print(f"Brak wystarczającej ilości danego towaru w magazynie. "
                   f"Sprzedano {product_to_sell_amount} sztuk.")
-            warehouse[product_to_sell_name]["amount"] = 0
+            product_from_warehouse.amount_of_product = 0
 
         # Dodanie do konta kwoty sprzedaży
-        amount_in_account = amount_in_account + (product_to_sell_price * product_to_sell_amount)
+        amount_in_account += (product_to_sell_price * product_to_sell_amount)
 
         # Jeśli ilość danego towaru = 0 usunięcie towaru z kartoteki magazynu
-        if warehouse[product_to_sell_name]["amount"] == 0:
-            del warehouse[product_to_sell_name]
+        if product_from_warehouse.amount_of_product == 0:
+            Warehouse.query.filter(Warehouse.name_of_product == product_to_sell_name).delete()
 
         # Aktualizacja historii operacji
-        operation_history.append({"Nazwa operacji": "Sprzedaż",
-                                  "Opis operacji":
-                                      (
-                                          f"Nazwa sprzedanego produktu: {product_to_sell_name}",
-                                          f"Kwota sprzedaży za jeden produkt: {product_to_sell_price}",
-                                          f"Ilość sprzedanych produktów: {product_to_sell_amount}",
-                                          f"Stan konta po operacji: {amount_in_account}"
-                                      ),
-                                  "Data operacji": give_operation_date()})
+        name_of_operation = "Sprzedaż"
+        description_of_operation = (f"Nazwa sprzedanego produktu: {product_to_sell_name}",
+                                    f"Kwota sprzedaży za jeden produkt: {product_to_sell_price}",
+                                    f"Ilość sprzedanych produktów: {product_to_sell_amount}",
+                                    f"Stan konta po operacji: {amount_in_account}")
+        date_of_operation = give_operation_date()
+
+        new_operation = History(name_of_operation=name_of_operation,
+                                description_of_operation=History.list_to_json(description_of_operation),
+                                date_of_operation=date_of_operation)
+
+        db.session.add(new_operation)
+
+        # Commit do tabel bazy danych
+        db.session.commit()
 
         # Dodanie komunikatu - Sprzedaż
         flash("Dokonano wpisu sprzedaży!")
 
-    # # Zapisanie danych do plików
-    # with open("data_amount_in_account.txt", "w") as file_stream:
-    #     file_stream.write(str(amount_in_account))
+    # Zapis stanu konta do bazy danych
+    save_amount_in_account(amount_in_account)
 
-    with open("warehouse.json", "w") as file_stream:
-        file_stream.write(dumps(warehouse))
-
-    with open("operation_history.json", "w") as file_stream:
-        file_stream.write(dumps(operation_history))
-
-    print("Poprawnie zapisano dane.")
     return render_template("index.html", amount_in_account=amount_in_account)
 
 
