@@ -79,6 +79,13 @@ def read_operation_history():
         return {}
 
 
+def add_operation_in_history(name_of_operation, description_of_operation):
+    new_operation = History(name_of_operation=name_of_operation,
+                            description_of_operation=History.list_to_json(description_of_operation),
+                            date_of_operation=give_operation_date())
+    db.session.add(new_operation)
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     # Odczytanie stanu konta z bazy danych
@@ -93,16 +100,10 @@ def index():
         amount_in_account += difference_in_account
 
         # Aktualizacja historii operacji - Dodanie operacji do tabeli bazy danych
-        name_of_operation = "Saldo"
         description_of_operation = (f"Kwota operacji: {difference_in_account}",
                                     f"Stan konta po operacji: {amount_in_account}")
-        date_of_operation = give_operation_date()
 
-        new_operation = History(name_of_operation=name_of_operation,
-                                description_of_operation=History.list_to_json(description_of_operation),
-                                date_of_operation=date_of_operation)
-
-        db.session.add(new_operation)
+        add_operation_in_history("Saldo", description_of_operation)
 
         # Commit do tabel bazy danych
         db.session.commit()
@@ -133,19 +134,13 @@ def index():
                                     amount_of_product=product_to_buy_amount)
             db.session.add(new_product)
 
-        # Aktualizacja historii operacji
-        name_of_operation = "Zakup"
+        # Aktualizacja historii operacji - Dodanie operacji do tabeli bazy danych
         description_of_operation = (f"Nazwa zakupionego produktu: {product_to_buy_name}",
                                     f"Kwota zakupu za jeden produkt: {product_to_buy_price}",
                                     f"Ilość zakupionych produktów: {product_to_buy_amount}",
                                     f"Stan konta po operacji: {amount_in_account}")
-        date_of_operation = give_operation_date()
 
-        new_operation = History(name_of_operation=name_of_operation,
-                                description_of_operation=History.list_to_json(description_of_operation),
-                                date_of_operation=date_of_operation)
-
-        db.session.add(new_operation)
+        add_operation_in_history("Zakup", description_of_operation)
 
         # Commit do tabel bazy danych
         db.session.commit()
@@ -189,19 +184,13 @@ def index():
         if product_from_warehouse.amount_of_product == 0:
             Warehouse.query.filter(Warehouse.name_of_product == product_to_sell_name).delete()
 
-        # Aktualizacja historii operacji
-        name_of_operation = "Sprzedaż"
+        # Aktualizacja historii operacji - Dodanie operacji do tabeli bazy danych
         description_of_operation = (f"Nazwa sprzedanego produktu: {product_to_sell_name}",
                                     f"Kwota sprzedaży za jeden produkt: {product_to_sell_price}",
                                     f"Ilość sprzedanych produktów: {product_to_sell_amount}",
                                     f"Stan konta po operacji: {amount_in_account}")
-        date_of_operation = give_operation_date()
 
-        new_operation = History(name_of_operation=name_of_operation,
-                                description_of_operation=History.list_to_json(description_of_operation),
-                                date_of_operation=date_of_operation)
-
-        db.session.add(new_operation)
+        add_operation_in_history("Sprzedaż", description_of_operation)
 
         # Commit do tabel bazy danych
         db.session.commit()
@@ -229,8 +218,6 @@ def history():
     else:
         start = 0
         end = len(operation_history)
-
-    app.logger.info(type(operation_history[0].give_description_of_operation()))
     return render_template("history.html", operation_history=operation_history, start=start, end=end)
 
 
