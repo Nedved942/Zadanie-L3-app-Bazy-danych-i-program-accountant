@@ -23,14 +23,15 @@
     <p class="fs-3">Historia operacji:</p>
     <div class="fs-6">
     {% for operation in operation_history[start:end] %}
-        {{ loop.index }}. {{ operation["Nazwa operacji"] }}<br>
-        Data operacji: {{ operation["Data operacji"] }}<br>
-        {% for operation_description in operation["Opis operacji"] %}
+        {{ loop.index }}. {{ operation.name_of_operation }}<br>
+        Data operacji: {{ operation.date_of_operation }}<br>
+        {% for operation_description in operation.give_description_of_operation() %}
             {{ operation_description }}
             <br>
         {% endfor %}
-        <br><br>
-    {% endfor %}
+
+        <br> <br>
+        {% endfor %}
     </div>
 
 {% endblock %}

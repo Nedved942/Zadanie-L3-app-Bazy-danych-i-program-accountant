@@ -2,8 +2,6 @@ from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from json import dumps, loads
-from json.decoder import JSONDecodeError
-from sqlalchemy import Text
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "Tajny klucz"
@@ -27,7 +25,7 @@ class Warehouse(db.Model):
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name_of_operation = db.Column(db.String(120))
-    description_of_operation = db.Column(Text)
+    description_of_operation = db.Column(db.Text)
     date_of_operation = db.Column(db.String(120))
 
     @staticmethod
@@ -66,34 +64,19 @@ def save_amount_in_account(amount_in_account):
 
 
 def read_warehouse():
-    try:
-        with open("warehouse.json") as file_stream:
-            warehouse_txt_data = file_stream.read()
-
-            if not warehouse_txt_data:
-                print("Plik jest pusty.")
-            else:
-                return loads(warehouse_txt_data)
-    except FileNotFoundError:
-        print("Nie pobrano danych z pliku.")
-    except JSONDecodeError as e:
-        print(f"Wystąpił nieoczekiwany błąd {e}.")
+    warehouse = Warehouse.query.all()
+    if warehouse:
+        return warehouse
+    else:
+        return []
 
 
 def read_operation_history():
-    try:
-        with open("operation_history.json") as file_stream:
-            operation_history_txt_data = file_stream.read()
-
-            if not operation_history_txt_data:
-                pass
-                print("Plik jest pusty.")
-            else:
-                return loads(operation_history_txt_data)
-    except FileNotFoundError:
-        print("Nie pobrano danych z pliku.")
-    except JSONDecodeError as e:
-        print(f"Wystąpił nieoczekiwany błąd {e}.")
+    operation_history = History.query.all()
+    if operation_history:
+        return operation_history
+    else:
+        return {}
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -247,6 +230,7 @@ def history():
         start = 0
         end = len(operation_history)
 
+    app.logger.info(type(operation_history[0].give_description_of_operation()))
     return render_template("history.html", operation_history=operation_history, start=start, end=end)
 
 

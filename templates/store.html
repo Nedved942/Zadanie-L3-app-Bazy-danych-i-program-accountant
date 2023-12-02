@@ -19,12 +19,12 @@
             </tr>
             </thead>
             <tbody>
-            {% for name in warehouse %}
+            {% for product in warehouse %}
                 <tr>
                     <th scope="row">{{ loop.index }}</th>
-                    <td>{{ name.capitalize() }}</td>
-                    <td>{{ warehouse[name]['price'] }}</td>
-                    <td>{{ warehouse[name]['amount'] }}</td>
+                    <td>{{ product.name_of_product.capitalize() }}</td>
+                    <td>{{ product.price_of_product }}</td>
+                    <td>{{ product.amount_of_product }}</td>
                 </tr>
             {% endfor %}
             </tbody>
