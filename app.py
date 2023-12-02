@@ -26,12 +26,13 @@ class Warehouse(db.Model):
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name_of_operation = db.Column(db.String(150))
+    name_of_operation = db.Column(db.String(120))
     description_of_operation = db.Column(Text)
-    date_of_operation = db.Column(db.DateTime)
+    date_of_operation = db.Column(db.String(120))
 
-    def __init__(self, list_of_description):
-        self.description_of_operation = dumps(list_of_description)
+    @staticmethod
+    def list_to_json(list_of_description):
+        return dumps(list_of_description)
 
     def give_description_of_operation(self):
         return loads(self.description_of_operation)
@@ -96,25 +97,13 @@ def index():
     warehouse = read_warehouse()
     operation_history = read_operation_history()
 
-    # Dodanie lub odjęcie wartości od kwoty na koncie
+    # Zmiana salda
     # Pobranie danych wejściowych
     difference_in_account = request.form.get("difference_in_account")
 
     if difference_in_account:
         difference_in_account = int(difference_in_account)
         amount_in_account += difference_in_account
-
-        # Aktualizacja historii operacji - Saldo
-        operation_history.append({"Nazwa operacji": "Saldo",
-                                  "Opis operacji":
-                                      (
-                                          f"Kwota operacji: {difference_in_account}",
-                                          f"Stan konta po operacji: {amount_in_account}"
-                                      ),
-                                  "Data operacji": give_operation_date()})
-
-        # Dodanie komunikatu - Saldo
-        flash("Zmieniono stan konta!")
 
         # Zapis stanu konta do bazy danych
         account = Account.query.first()
@@ -124,7 +113,24 @@ def index():
         else:
             new_account = Account(amount=0)
             db.session.add(new_account)
-            db.session.commit()
+
+        # Aktualizacja historii operacji - Dodanie operacji do tabeli bazy danych
+        name_of_operation = "Saldo"
+        description_of_operation = (f"Kwota operacji: {difference_in_account}",
+                                    f"Stan konta po operacji: {amount_in_account}")
+        date_of_operation = give_operation_date()
+
+        new_operation = History(name_of_operation=name_of_operation,
+                                description_of_operation=History.list_to_json(description_of_operation),
+                                date_of_operation=date_of_operation)
+
+        db.session.add(new_operation)
+
+        # Commit do tabel bazy danych
+        db.session.commit()
+
+        # Dodanie komunikatu - Saldo
+        flash("Zmieniono stan konta!")
 
     # Zakup produktu
     # Pobranie danych wejściowych
@@ -138,28 +144,33 @@ def index():
 
         amount_in_account = amount_in_account - (product_to_buy_price * product_to_buy_amount)
 
-        #  Zwiększenie ilości i zamiana ceny produktu, jeśli jest na magazynie
-        if product_to_buy_name in warehouse:
-            warehouse[product_to_buy_name]["amount"] = warehouse[product_to_buy_name]["amount"] \
-                                                       + product_to_buy_amount
-            warehouse[product_to_buy_name]["price"] = product_to_buy_price
+        #  Zwiększenie ilości i zamiana ceny produktu, jeśli jest na magazynie, jeśli nie dodanie go
+        product_from_warehouse = Warehouse.query.filter(Warehouse.name_of_product == product_to_buy_name).first()
+        if product_from_warehouse:
+            product_from_warehouse.amount_of_product += product_to_buy_amount
+            product_from_warehouse.price_of_product = product_to_buy_price
         else:
-            # Dodanie produktu do słownika magazynu
-            warehouse[product_to_buy_name] = {
-                "price": product_to_buy_price,
-                "amount": product_to_buy_amount
-            }
+            new_product = Warehouse(name_of_product=product_to_buy_name,
+                                    price_of_product=product_to_buy_price,
+                                    amount_of_product=product_to_buy_amount)
+            db.session.add(new_product)
 
         # Aktualizacja historii operacji
-        operation_history.append({"Nazwa operacji": "Zakup",
-                                  "Opis operacji":
-                                      (
-                                          f"Nazwa zakupionego produktu: {product_to_buy_name}",
-                                          f"Kwota zakupu za jeden produkt: {product_to_buy_price}",
-                                          f"Ilość zakupionych produktów: {product_to_buy_amount}",
-                                          f"Stan konta po operacji: {amount_in_account}"
-                                      ),
-                                  "Data operacji": give_operation_date()})
+        name_of_operation = "Zakup"
+        description_of_operation = (f"Nazwa zakupionego produktu: {product_to_buy_name}",
+                                    f"Kwota zakupu za jeden produkt: {product_to_buy_price}",
+                                    f"Ilość zakupionych produktów: {product_to_buy_amount}",
+                                    f"Stan konta po operacji: {amount_in_account}")
+        date_of_operation = give_operation_date()
+
+        new_operation = History(name_of_operation=name_of_operation,
+                                description_of_operation=History.list_to_json(description_of_operation),
+                                date_of_operation=date_of_operation)
+
+        db.session.add(new_operation)
+
+        # Commit do tabel bazy danych
+        db.session.commit()
 
         # Dodanie komunikatu - Zakup
         flash("Dokonano wpisu zakupu!")
